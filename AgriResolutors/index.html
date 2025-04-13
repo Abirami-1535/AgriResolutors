@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Resolutors</title>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f5f5f5; }
+    header { background: #28a745; color: white; padding: 20px; text-align: center; }
+    nav { display: flex; justify-content: center; background: #ddd; position: sticky; top: 0; z-index: 1000; }
+    nav button { padding: 10px 20px; margin: 5px; border: none; background: #ccc; cursor: pointer; }
+    nav button.active { background: #28a745; color: white; }
+    section { display: none; padding: 20px; }
+    section.active { display: block; }
+    select, input, button { margin: 10px 0; padding: 10px; width: 100%; max-width: 400px; }
+    .storage-box, .card { background: white; padding: 15px; margin-top: 10px; border: 1px solid #ccc; border-radius: 5px; max-width: 450px; }
+    button { background: #28a745; color: white; border: none; }
+    button:hover { background: #218838; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Agri Mandi Tracker</h1>
+  <p>Multi-Mandi Order System with Pricing</p>
+</header>
+
+<nav>
+  <button class="tab active" data-tab="farmer">Farmer</button>
+  <button class="tab" data-tab="mandi">Mandi</button>
+  <button class="tab" data-tab="customer">Customer</button>
+  <button class="tab" data-tab="mandi_location">Mandi Locations</button>
+</nav>
+<section id="farmer" class="active">
+  <h2>Farmer - View Storage & Prices</h2>
+  <select id="farmerMandiSelect" onchange="showStorage('farmer')">
+    <option value="">Select Mandi</option>
+    <option value="A">Mandi A</option>
+    <option value="B">Mandi B</option>
+    <option value="C">Mandi C</option>
+    <option value="D">Mandi D</option>
+    <option value="E">Mandi E</option>
+  </select>
+  <div class="storage-box" id="farmerStorage"></div>
+</section>
+
+<section id="mandi">
+  <h2>Mandi - Update Storage and Price</h2>
+  <select id="mandiSelect">
+    <option value="">Select Mandi</option>
+    <option value="A">Mandi A</option>
+    <option value="B">Mandi B</option>
+    <option value="C">Mandi C</option>
+    <option value="D">Mandi D</option>
+    <option value="E">Mandi E</option>
+  </select>
+  <select id="vegSelect">
+    <option value="">Select Vegetable</option>
+    <option value="Tomato">Tomato</option>
+    <option value="Potato">Potato</option>
+    <option value="Onion">Onion</option>
+    <option value="Cabbage">Cabbage</option>
+    <option value="Carrot">Carrot</option>
+  </select>
+  <input type="number" id="totalInput" placeholder="Total Capacity (kg)">
+  <input type="number" id="usedInput" placeholder="Used Capacity (kg)">
+  <input type="number" id="priceInput" placeholder="Price per kg (₹)">
+  <button onclick="updateStorage()">Update</button>
+  <div class="storage-box" id="mandiStorage"></div>
+</section>
+
+<section id="customer">
+  <h2>Customer - Order Vegetables</h2>
+  <select id="customerVegSelect">
+    <option value="">Select Vegetable</option>
+    <option value="Tomato">Tomato</option>
+    <option value="Potato">Potato</option>
+    <option value="Onion">Onion</option>
+    <option value="Cabbage">Cabbage</option>
+    <option value="Carrot">Carrot</option>
+  </select>
+  <input type="number" id="orderQty" placeholder="Quantity to Order (kg)">
+  <button onclick="placeMultiMandiOrder()">Place Order</button>
+  <div class="storage-box" id="customerStorage"></div>
+</section>
+<section id="mandi_location">
+  <h2>Location of Mandis</h2>
+  <iframe src="https://www.google.com/maps/embed?pb=!1m16!1m12!1m3!1d62523.186647473616!2d78.10879450325335!3d11.644772987965142!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!2m1!1svegetables%20storage%20areas%20in%20salem!5e0!3m2!1sen!2sin!4v1744539111551!5m2!1sen!2sin" width="1200" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+</section>
+
+<script>
+  const vegetables = ["Tomato", "Potato", "Onion", "Cabbage", "Carrot"];
+  const mandis = { A: {}, B: {}, C: {}, D: {}, E: {} };
+
+  for (let mandi in mandis) {
+    vegetables.forEach(veg => {
+      mandis[mandi][veg] = { total: 0, used: 0, price: 0 };
+    });
+  }
+
+  document.querySelectorAll('.tab').forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.tab).classList.add('active');
+    };
+  });
+
+  function showStorage(role) {
+    const mandiId = document.getElementById(`${role}MandiSelect`)?.value;
+    const output = document.getElementById(`${role}Storage`);
+    if (!mandiId || !mandis[mandiId]) {
+      output.innerHTML = '';
+      return;
+    }
+    let html = `<strong>Mandi ${mandiId} Storage & Prices:</strong><br>`;
+    vegetables.forEach(veg => {
+      const { total, used, price } = mandis[mandiId][veg];
+      html += `<div class="card">
+        <b>${veg}</b><br>
+        Total: ${total} kg<br>
+        Used: ${used} kg<br>
+        Available: ${total - used} kg<br>
+        Price: ₹${price} / kg
+      </div>`;
+    });
+    output.innerHTML = html;
+  }
+
+  function updateStorage() {
+    const mandiId = document.getElementById('mandiSelect').value;
+    const veg = document.getElementById('vegSelect').value;
+    const total = parseInt(document.getElementById('totalInput').value);
+    const used = parseInt(document.getElementById('usedInput').value);
+    const price = parseFloat(document.getElementById('priceInput').value);
+
+    if (!mandiId || !veg || isNaN(total) || isNaN(used) || isNaN(price) || used > total) {
+      alert("Invalid input.");
+      return;
+    }
+
+    mandis[mandiId][veg] = { total, used, price };
+    alert(`Updated ${veg} in Mandi ${mandiId}`);
+    showStorage('mandi');
+
+    // Refresh Farmer view if Mandi is same
+    const farmerSelect = document.getElementById('farmerMandiSelect');
+    if (farmerSelect && farmerSelect.value === mandiId) {
+      showStorage('farmer');
+    }
+  }
+
+  function placeMultiMandiOrder() {
+    const veg = document.getElementById('customerVegSelect').value;
+    const qty = parseInt(document.getElementById('orderQty').value);
+    const output = document.getElementById('customerStorage');
+
+    if (!veg || isNaN(qty) || qty <= 0) {
+      alert("Please enter valid order details.");
+      return;
+    }
+
+    let remaining = qty;
+    const fulfilledFrom = [];
+    let totalCost = 0;
+
+    for (let mandi of ['A', 'B', 'C', 'D', 'E']) {
+      const stock = mandis[mandi][veg];
+      const available = stock.total - stock.used;
+
+      if (available > 0 && stock.price > 0) {
+        const take = Math.min(available, remaining);
+        stock.used += take;
+        remaining -= take;
+        totalCost += take * stock.price;
+        fulfilledFrom.push(`${take}kg from Mandi ${mandi} @ ₹${stock.price}/kg`);
+        if (remaining === 0) break;
+      }
+    }
+
+    if (fulfilledFrom.length === 0) {
+      output.innerHTML = `<strong>Order Failed:</strong> No stock available in any mandi.`;
+      alert("Order failed: No stock available.");
+      return;
+    }
+
+    output.innerHTML = `
+      <strong>Order Fulfilled:</strong><br>
+      ${fulfilledFrom.join('<br>')}<br>
+      <b>Total Cost: ₹${totalCost.toFixed(2)}</b>
+    `;
+
+    alert(remaining > 0
+      ? `Partially fulfilled. ₹${totalCost.toFixed(2)} charged. ${remaining}kg unavailable.`
+      : `Order fulfilled! Total: ₹${totalCost.toFixed(2)}`
+    );
+
+    // Refresh Farmer view if any mandi matches current selection
+    const selectedFarmerMandi = document.getElementById('farmerMandiSelect')?.value;
+    if (selectedFarmerMandi) {
+      showStorage('farmer');
+    }
+  }
+</script>
+
+</body>
+</html>
